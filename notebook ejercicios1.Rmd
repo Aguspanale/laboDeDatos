@@ -1,0 +1,130 @@
+---
+title: "Ejercicios Libro"
+output: html_document
+date: "2023-02-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+```
+
+##Ejercicio 1.4
+
+```{r}
+vector <- seq(from = 0, to = 1,  by = 0.2)
+plot(vector, vector*(1-vector),col = 3, xlab = "x", ylab = "x*(1-x)")
+
+vector <- seq(from = 0, to = 1,  by = 0.01)
+
+lines(vector, vector*(1-vector),col = 4)
+```
+
+##1.5
+
+```{r}
+sum((1:100)*(1:100))
+```
+
+1.6
+
+```{r}
+x <- seq(from = 10, to = 30, by = 2)
+x[-1:-3]
+```
+
+1.7
+
+```{r}
+rivers
+mean(rivers)
+sd(rivers)
+hist(rivers)
+summary(rivers)
+largos <- rivers[rivers>1000]
+largos
+```
+
+1.8
+
+```{r}
+paged_table(airquality)
+summary(airquality)
+head(airquality)
+str(airquality)
+airquality$Month <- factor(airquality$Month)
+```
+
+1.9
+
+```{r}
+state <- data.frame(NAME = state.name, REGION = state.region, AREA = state.area)
+paged_table(state)
+summary(state)
+state.name[state.area < 10000]
+state.name[which.min(state.center$y)]
+
+```
+
+1.11
+
+```{r}
+rm(mtcars)
+paged_table(mtcars)
+mtcars$am <- factor(mtcars$am, levels = c(0, 1), labels = c("auto", "manual"))
+table(mtcars$am)
+table(mtcars[mtcars$mpg > 25, "am"])
+```
+
+1.12
+
+```{r}
+hotdogs <- fosdata::hot_dogs
+paged_table(hotdogs)
+str(hotdogs)
+levels(hotdogs$type)
+max(hotdogs$sodium)
+mean(hotdogs$calories)
+
+```
+
+1.13
+
+```{r}
+wages <- HistData::DrinksWages
+paged_table(wages)
+str(wages)
+wages$trade[which.min(wages$wage)]
+sum(wages$n)
+sum(wages$wage*wages$n)/sum(wages$n)
+```
+
+1.14
+
+```{r}
+batting <- Lahman::Batting
+paged_table(batting)
+str(batting)
+head(batting)
+max(batting$X3B)
+batting$playerID[which(batting$X3B == max(batting$X3B))]
+batting$yearID[which(batting$X3B == max(batting$X3B))]
+batting[which.max(batting$X3B[batting$yearID >= 1960]),"playerID"]
+```
+
+1.15
+
+```{r}
+bechdel <- fosdata::bechdel
+paged_table(bechdel)
+str(bechdel)
+table(bechdel$binary)
+length(bechdel[bechdel$binary == "PASS",1])/length(bechdel[,1])
+anios <- table(bechdel$year)
+max(anios)
+anios[which.max(anios)]
+str(bechdel$clean_test)
+pasanBechdel <- bechdel[bechdel$binary == "PASS",-6]
+str(pasanBechdel)
+tienenDomgross <- bechdel[!is.na(bechdel$domgross),]
+```
