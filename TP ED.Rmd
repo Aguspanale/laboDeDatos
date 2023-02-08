@@ -1,0 +1,99 @@
+---
+title: "TP estadistica Descriptiva"
+author: "Agustin Pañale"
+date: "2023-02-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Leo el archivo
+
+```{r}
+prop <- read.csv("ar_properties.csv")
+table(prop$l4 == "Centro")
+```
+
+creo mi dataset mas pequeño
+
+`
+```{r}
+propBarrios <- prop[is.element(prop$l3, "Centro / Microcentro") | is.element(prop$l3, "Mataderos") | is.element(prop$l3, "Puerto Madero")| is.element(prop$l3, "Colegiales")| is.element(prop$l3, "Boedo"),]
+
+propBarrios$l3 <- factor(propBarrios$l3)
+levels(propBarrios$l3)
+propBarrios
+```
+
+# 1 Tamaño de las propiedades
+
+## 1. A partir de los datos, ¿existen propiedades con datos faltantes en teerminos de superficie
+y nuumero de ambientes?
+
+```{r}
+sum(is.na(propBarrios$surface_covered))
+sum(is.na(propBarrios$surface_total))
+sum(is.na(propBarrios$rooms))
+```
+obs: los 3 tienen NAs
+
+
+## 2. Visualizar la superficie y numero de habitaciones en cada barrio. Sugerencia: Construir
+histogramas para las superficies, y barplots para el numero de habitaciones.
+
+filtro por barrio
+
+```{r}
+propMataderos <- propBarrios[propBarrios$l3 == "Mataderos",]
+propMicrocentro <- propBarrios[propBarrios$l3 == "Centro / Microcentro",]
+propMadero <- propBarrios[propBarrios$l3 == "Puerto Madero",]
+propBoedo <- propBarrios[propBarrios$l3 == "Boedo",]
+propColegiales <- propBarrios[propBarrios$l3 == "Colegiales",]
+```
+
+##Histogramas
+```{r}
+hist(propMataderos$surface_total, breaks = 70, main = "Superficie en Mataderos", xlab = "superficie", xlim = c(0,1500))
+hist(propMicrocentro$surface_total, breaks = 400, main = "Superficie en Microcentro", xlab = "superficie", xlim = c(0,1500))
+hist(propMadero$surface_total, breaks = 300, main = "Superficie en Puerto Madero", xlab = "superficie", xlim = c(0,1500))
+hist(propBoedo$surface_total, breaks = 300, main = "Superficie en Boedo", xlab = "superficie", xlim = c(0,1500))
+hist(propColegiales$surface_total, breaks = 100, main = "Superficie en Colegiales", xlab = "superficie", xlim = c(0,1500))
+```
+##Barplots
+
+```{r}
+barplot(table(propMicrocentro$rooms),main = "Cantidad de habitaciones Microcentro")
+barplot(table(propMataderos$rooms),main = "Cantidad de habitaciones Mataderos")
+barplot(table(propMadero$rooms),main = "Cantidad de habitaciones Puerto Madero")
+barplot(table(propBoedo$rooms),main = "Cantidad de habitaciones Boedo")
+barplot(table(propColegiales$rooms),main = "Cantidad de habitaciones Colegiales")
+
+```
+
+##3 A partir de los graficos realizados en el punto anterior, explorar la posibilidad de que
+haya datos faltantes que esten codificados de otra forma.
+
+```{r}
+table(propMataderos$surface_total == 0)
+table(propMicrocentro$surface_total == 0)
+table(propMadero$surface_total == 0)
+table(propBoedo$surface_total == 0)
+table(propColegiales$surface_total == 0)
+```
+
+obs: hay 29 propiedades en puerto madero con superficie 0, como son pocos
+considero que no se esten codificando mal NAs
+
+##4 Caracterizar la superficie de una propiedad tipica de este dataset usando promedio,
+desviıo estandar, mediana y cuartiles. Calcular estas magnitudes para cada barrio y
+presentarlas en una tabla que permita compararlas
+
+```{r}
+boxplot(propBarrios$surface_total~propBarrios$l3,outline=FALSE,las=2,cex.axis=0.7,xlab='',ylab = "superficie total")
+abline(h=mean(propBarrios$surface_total,na.rm = TRUE),col=3)
+abline(h=median(propBarrios$surface_total, na.rm = TRUE),col=4)
+
+```
+
