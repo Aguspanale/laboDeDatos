@@ -1,0 +1,100 @@
+---
+title: "Untitled"
+author: "Agustin"
+date: "2023-02-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+```
+
+```{r}
+pengu <- palmerpenguins::penguins
+paged_table(pengu)
+```
+
+grafico las variables para comenzar
+
+```{r}
+ggplot(pengu, aes(bill_length_mm)) + geom_histogram()
+ggplot(pengu, aes(bill_depth_mm)) + geom_histogram()
+ggplot(pengu, aes(flipper_length_mm)) + geom_histogram()
+ggplot(pengu, aes(body_mass_g)) + geom_histogram()
+ggplot(pengu, aes(species)) + geom_bar()
+ggplot(pengu, aes(island)) + geom_bar()
+ggplot(pengu, aes(sex)) + geom_bar()
+ggplot(pengu, aes(year)) + geom_bar()
+ggpairs(pengu)
+
+```
+observo que en largo de aletas,peso, ancho de pico y largo de pico hay 2 "montañas" en el histograma, sospecho que puede ser porque son distintas especies, cruzo las variables
+```{r}
+ggplot(pengu, aes(species,flipper_length_mm,fill = species)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("Largo de aletas")
+ggplot(pengu, aes(species,bill_length_mm,fill = species)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("Largo de pico")
+ggplot(pengu, aes(species,bill_depth_mm,fill = species)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("ancho de pico")
+ggplot(pengu, aes(species,body_mass_g,fill = species)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("peso")
+```
+
+confirmo mi hipotesis, la especie Gentoo tiene en general mucho más largo de aletas que las otras 2, es en general más pesada y tiene menos ancho de pico, mientras que la especie adelie tiene menos largo de pico. Tambien puedo ver que las observaciones del peso de la especie chinstrap estan mucho mas abultadas alrededor de la mediana que es aproximandamente 3800.
+
+
+
+voy a intentar ver si existe correlacion entre el peso del pinguino y el resto de variables cuantitativas, sospecho que si ya que si un pinguino es en general más grande, su pico será mas ancho y largo y sus aletas mas largas.
+
+```{r}
+ggplot(pengu, aes(body_mass_g,bill_depth_mm,color = species,group(species))) +
+  geom_jitter() +
+  xlab("Peso") +
+  ylab("profundidad del pico") +
+  geom_smooth(method = "lm",se=FALSE)
+
+ggplot(pengu, aes(body_mass_g,bill_length_mm,color = species,group(species))) +
+  geom_jitter() +
+  xlab("Peso") +
+  ylab("largo del pico") +
+  geom_smooth(method = "lm",se=FALSE)
+
+ggplot(pengu, aes(body_mass_g,flipper_length_mm,color = species,group(species))) +
+  geom_jitter() +
+  xlab("Peso") +
+  ylab("largo de aletas") +
+  geom_smooth(method = "lm",se=FALSE)
+```
+confirmo que mientras mas pesa el pinguino mas grandes serán el largo de su pico y sus aletas, y ancho de pico
+
+
+ahora voy a cruzar las especies con las islas
+
+```{r}
+ggplot(pengu,aes(species,island,color = species)) + geom_jitter()
+```
+de este grafico puedo concluir que no puedo hacer ningun analisis basandome en la isla de la que se tomaron las muestras y teniendo en cuenta todas las especies, pues las diferencias entre islas serán en realidad diferencias entre especies, lo que si me serviría es analizar la especie adelie respecto de las distintas islas pues esta presente en todas ellas. filtro el dataset y analizo la distribucion de las variables en las distintas islas.
+
+
+```{r}
+penguAdelie <- pengu[pengu$species == "Adelie",]
+
+ggplot(penguAdelie, aes(island,flipper_length_mm,fill = island)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("Largo de aletas")
+ggplot(penguAdelie, aes(island,bill_length_mm,fill = island)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("Largo de pico")
+ggplot(penguAdelie, aes(island,bill_depth_mm,fill = island)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("ancho de pico")
+ggplot(penguAdelie, aes(island,body_mass_g,fill = island)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.1) + ylab("peso")
+```
+
+lo unico que logro observar es que hay 2 regiones donde se concentran los largos de picos de los pinguinos Adelie en la isla Dream, voy a intentar averiguar qué puede llegar a generar estas 2 regiones, sospecho que es el sexo pues son 2
+
+```{r}
+penguAdelieBiscoe <- penguAdelie[penguAdelie$island == "Biscoe" & !is.na(penguAdelie$sex),]
+penguAdelieDream <- penguAdelie[penguAdelie$island == "Dream" & !is.na(penguAdelie$sex),]
+penguAdelieTorgersen <- penguAdelie[penguAdelie$island == "Torgersen" & !is.na(penguAdelie$sex),]
+
+ggplot(penguAdelieBiscoe  , aes(sex,bill_length_mm,color = sex)) + geom_boxplot() + ggtitle("Isla Biscoe")
+ggplot(penguAdelieDream, aes(sex,bill_length_mm,color = sex)) + geom_boxplot()  + ggtitle("Isla Dream")
+ggplot(penguAdelieTorgersen, aes(sex,bill_length_mm,color = sex)) + geom_boxplot()  + ggtitle("Isla Torgersen")
+```
+
+Observo que es cierto que esas 2 regiones estan determinadas por el sexo, y en particular en la isla dream las observaciones de largo de pico tienden a parecerse mucho a la mediana del sexo
