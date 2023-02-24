@@ -1,0 +1,164 @@
+---
+title: "practica 3"
+author: "Agustin"
+date: "2023-02-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(ggplot2)
+library(gridExtra)
+set.seed(7)
+```
+
+
+##1, simulacion buena
+
+Genero los datos
+
+```{r}
+A <- matrix(nrow = 50, ncol = 3)
+
+B <- A
+
+C <- A
+
+A[,1] <- runif(50,2,4)
+A[,2] <- runif(50,1,2)
+A[,3] <- 1
+
+B[,1] <- rnorm(50,0,sqrt(1))
+B[,2] <- rnorm(50,0,sqrt(1))
+B[,3] <- 2
+
+C[,1] <- runif(50,1,2)
+C[,2] <- runif(50,-1,2)
+C[,3] <- 3
+
+data <- rbind(A,B)
+data <- rbind(data,C)
+data <- data.frame(data)
+data[,3] <- factor(data[,3])
+
+ggplot(data, aes(X1,X2,color = X3)) + geom_point()
+
+```
+```{r}
+data <- cbind(data, factor(kmeans(data[,1:2],3)[[1]]))
+colnames(data) <- c("X1","X2","X3","X4")
+G1 <- ggplot(data, aes(X1,X2,color = X4)) + geom_point() 
+G2 <- ggplot(data, aes(X1,X2,color = X3)) + geom_point()
+grid.arrange(G1,G2)
+```
+bastante bien, ahora genero los datos "malos"
+
+```{r}
+A <- matrix(nrow = 100, ncol = 3)
+
+B <- A
+
+t <- runif(100,0,2*pi)
+r <- runif(100,0,1)
+
+A[,1] <- r*cos(t)
+A[,2] <- r*sin(t)
+A[,3] <- 1
+
+t <- runif(100,0,2*pi)
+r <- runif(100,2,2.5)
+
+B[,1] <-  r*cos(t)
+B[,2] <-  r*sin(t)
+B[,3] <- 2
+
+data <- rbind(A,B)
+data <- data.frame(data)
+data[,3] <- factor(data[,3])
+
+ggplot(data, aes(X1,X2,color = X3)) + geom_point()
+```
+se ve de lejos que esto se va  a romper todo
+
+```{r}
+data <- cbind(data, factor(kmeans(data[,1:2],2)[[1]]))
+colnames(data) <- c("X1","X2","X3","X4")
+G1 <- ggplot(data, aes(X1,X2,color = X4)) + geom_point() 
+G2 <- ggplot(data, aes(X1,X2,color = X3)) + geom_point()
+grid.arrange(G1,G2,nrow = 1)
+```
+
+importo el archivo productos
+
+```{r}
+prod <- read.csv("producto.csv", sep = " ")
+
+preciovsmarketing <- prod[,2:3]
+
+ggplot(preciovsmarketing,aes(Precio,Marketing)) + geom_point()
+```
+
+observo que la variable marketing se mueve entre valores gigantes, mientras que precio va de 0 a 170, kmedias le dará mucha prioridad a marketing por la naturaleza de la distancia euclidea, voy a estandarizar los datos
+
+
+```{r}
+datosEscalados <- data.frame(scale(preciovsmarketing))
+
+
+preciovsmarketing <- cbind(preciovsmarketing,factor(kmeans(preciovsmarketing,2)[[1]]))
+colnames(preciovsmarketing)[3] <- "grupo"
+
+datosEscalados <- cbind(datosEscalados,factor(kmeans(datosEscalados,2)[[1]]))
+colnames(datosEscalados)[3] <- "grupo"
+
+
+G1 <- ggplot(preciovsmarketing, aes(Precio,Marketing,color = grupo)) + geom_point() 
+G2 <- ggplot(datosEscalados, aes(Precio,Marketing,color = grupo)) + geom_point() 
+grid.arrange(G1,G2,nrow = 1)
+```
+vemos que en el primer clustering solo se mira la variable marketing, mientras que en el segundo esta mas equilibrado, ahora comparo mis clusters buenos con los clusters determinados por el exito/fracaso
+```{r}
+prod <- cbind(prod,factor(kmeans(datosEscalados,2)[[1]]))
+
+colnames(prod)[4] <- "grupo"
+
+G1 <- ggplot(prod, aes(Precio,Marketing,color = Resultado)) + geom_point() 
+G2 <- ggplot(prod, aes(Precio,Marketing,color = grupo)) + geom_point() 
+grid.arrange(G1,G2,nrow = 1)
+```
+vemos que el modelo hecho por kmeans luego de estandarizar los datos los agrupo de forma correcta en su mayoria
+
+```{r}
+arrestos <- USArrests
+
+arrestosEscalados <- data.frame(scale(arrestos))
+
+errores <- c()
+for (i in 1:10){
+  errores[i] <- kmeans(arrestosEscalados,i)[[5]]
+}
+
+grupo <- factor(kmeans(arrestosEscalados,3)[[1]])
+
+arrestos3c <- cbind(arrestos,grupo)
+grupo <- factor(kmeans(arrestosEscalados,4)[[1]])
+
+arrestos4c <- cbind(arrestos,grupo)
+grupo <- factor(kmeans(arrestosEscalados,5)[[1]])
+
+arrestos5c <- cbind(arrestos,grupo)
+plot(errores,type = "l")
+```
+
+veo que a partir de 4 clusters el error disminuye muy despacio, elijo k = 5
+
+
+```{r}
+for (i in 1:5){
+  print(paste("resumen del cluster ",i))
+  
+  print(summary(arrestos5c[arrestos5c[,"grupo"] == i,]))
+}
+```
+
