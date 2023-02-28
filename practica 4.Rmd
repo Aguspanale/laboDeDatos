@@ -1,0 +1,173 @@
+---
+title: "practica 4"
+author: "agus"
+date: "2023-02-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# leo el archivo ar_properties 
+
+library(dplyr) # manejo de datos
+library(GGally) # scatterplots multiples
+options(rgl.printRglwidget = TRUE)
+datos1a <- read.csv("ar_properties.csv") # Acá completen con su propio PATH al archivo
+datos1a
+```
+
+### Aplicando filtros
+
+```{r}
+datos1d <- datos1a %>% 
+                   # Me quedo con los que pertenecen a Argentina, Capital Federal y Boedo
+            filter(l1 == "Argentina", 
+                   l2 == "Capital Federal",
+                   l3=="Boedo",
+                   # cuyo precio este en dolares 
+                   currency == "USD", 
+                   # propiedad tipo Casa
+                   property_type %in% c("Casa"),
+                   # operaciones de venta
+                   operation_type == "Venta") %>% 
+            dplyr::select(id, l3, surface_total, surface_covered, price) %>% mutate(Precio=price,Sup=surface_covered,Fondo=surface_total-surface_covered) %>% dplyr::select(Sup,Fondo,Precio) %>%  filter(Fondo>=0) %>% na.omit()
+datos1d
+Sup<-datos1d$Sup
+Fondo<-datos1d$Fondo
+Precio<-datos1d$Precio
+```
+
+```{r}
+Eval <- function(mu, alfa) {
+  salida<-mean((Precio-mu-alfa*Sup)**2)
+  return(t(salida))
+}
+Eval(100000,2000)
+```
+
+
+```{r}
+facred<-0.9999 # factor de reduccion de la ventana
+facred.acu<-1 # factor de reduccion acumulado
+toler<-1/1e5 # umbral de tolerancia
+
+# rangos
+rango.mu<- 50000 # rango inicial de mu
+rango.alfa<- 500 # rango inicial de alfa
+
+# parametros iniciales
+mu<- 100000 # valor inicial de mu
+alfa<- 1000 # valor inicial de alfa
+
+# parametros mejores
+mejor.mu<- mu
+mejor.alfa<- alfa
+
+mejor.eval <- Eval(mu,alfa) # el mejor valor
+mejores<-matrix(c(mejor.eval,mu,alfa,1),1,4)
+k<-0 # indice de iteracion
+actu<-0 # indice de actualizacion
+set.seed(1) # Fijamos semilla para que siempre retorne el mismo resultado
+
+while (facred.acu>toler)
+{
+  k <- k+1
+  # Genero nuevos valores aleatorios
+  mu<-runif(1,mejor.mu-rango.mu*facred.acu,mejor.mu+rango.mu*facred.acu)
+  alfa<-runif(1,mejor.alfa-rango.alfa*facred.acu,mejor.alfa+rango.alfa*facred.acu)
+ 
+  # Evaluacion de los nuevos valores
+  valor<-Eval(mu,alfa)
+  if (valor<mejor.eval) # SI encuentro algo mejor -> Actualizacion
+  {
+    actu<-actu+1
+    mejor.eval<-valor
+    mejor.mu<-mu
+    mejor.alfa<-alfa
+    mejores<-rbind(mejores,c(mejor.eval,mu,alfa,k))
+  }
+  else # SI NO encuentro algo mejor -> Reduzco rango de busqueda
+  {
+    facred.acu<-facred.acu*facred
+  }
+}
+c(mu,alfa)
+dim(mejores)
+```
+
+
+hago la funcion para calcular el loocv
+
+```{r}
+error <- c()
+for (i in 1:68){
+  m2 <- lm(Precio~Sup+Fondo,datos1d[-i,])
+  coeficientes <- as.numeric(coef(m2))
+  error[i] <- abs(Precio[i] -(coeficientes[1]+ coeficientes[2]*Sup[i]+ coeficientes[3]*Fondo[i]))
+}
+mean(error)
+```
+
+
+```{r}
+error <- c()
+datosDesordenados <- datos1d[sample(1:dim(datos1d)[1],dim(datos1d)[1],replace = FALSE),]
+for (i in seq(1,68,2)){
+  m2 <- lm(Precio~Sup+Fondo,datosDesordenados[-c(i,i+1),])
+  coeficientes <- as.numeric(coef(m2))
+  error[c(i,i+1)] <- abs(datosDesordenados$Precio[c(i,i+1)] -(coeficientes[1]+ coeficientes[2]*datosDesordenados$Sup[c(i,i+1)]+ coeficientes[3]*datosDesordenados$Fondo[c(i,i+1)]))
+}
+length(error)
+mean(error)
+```
+```{r}
+error <- c()
+datosDesordenados <- datos1d[sample(1:dim(datos1d)[1],dim(datos1d)[1],replace = FALSE),]
+for (i in seq(1,68,4)){
+  m2 <- lm(Precio~Sup+Fondo,datosDesordenados[-(i:(i+3)),])
+  coeficientes <- as.numeric(coef(m2))
+  error[(i:(i+3))] <- abs(datosDesordenados$Precio[(i:(i+3))] -(coeficientes[1]+ coeficientes[2]*datosDesordenados$Sup[(i:(i+3))]+ coeficientes[3]*datosDesordenados$Fondo[(i:(i+3))]))
+}
+length(error)
+mean(error)
+```
+```{r}
+error <- c()
+datosDesordenados <- datos1d[sample(1:dim(datos1d)[1],dim(datos1d)[1],replace = FALSE),]
+for (i in seq(1,68,17)){
+  m2 <- lm(Precio~Sup+Fondo,datosDesordenados[-(i:(i+16)),])
+  coeficientes <- as.numeric(coef(m2))
+  error[(i:(i+16))] <- abs(datosDesordenados$Precio[(i:(i+16))] -(coeficientes[1]+ coeficientes[2]*datosDesordenados$Sup[(i:(i+16))]+ coeficientes[3]*datosDesordenados$Fondo[(i:(i+16))]))
+}
+length(error)
+mean(error)
+```
+
+
+punto 3 
+
+
+```{r}
+error <- c()
+for (i in 1:68){
+  m2 <- lm(Precio~Sup+Fondo,datos1d[-i,])
+  coeficientes <- as.numeric(coef(m2))
+  error[i] <- abs(Precio[i] -(coeficientes[1]+ coeficientes[2]*Sup[i]+ coeficientes[3]*Fondo[i]))
+}
+
+
+errorCompleto <- c()
+
+m2 <- lm(Precio~Sup+Fondo,datos1d)
+coeficientes <- as.numeric(coef(m2))
+for (i in 1:68){
+  errorCompleto[i] <- abs(Precio[i] -(coeficientes[1]+ coeficientes[2]*Sup[i]+ coeficientes[3]*Fondo[i]))
+}
+
+which.max(abs(mean(errorCompleto)-error))
+
+```
+
