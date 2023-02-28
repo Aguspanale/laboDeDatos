@@ -52,6 +52,9 @@ G1 <- ggplot(data, aes(X1,X2,color = X4)) + geom_point()
 G2 <- ggplot(data, aes(X1,X2,color = X3)) + geom_point()
 grid.arrange(G1,G2)
 ```
+
+
+
 bastante bien, ahora genero los datos "malos"
 
 ```{r}
@@ -79,6 +82,8 @@ data[,3] <- factor(data[,3])
 
 ggplot(data, aes(X1,X2,color = X3)) + geom_point()
 ```
+
+
 se ve de lejos que esto se va  a romper todo
 
 ```{r}
@@ -88,6 +93,7 @@ G1 <- ggplot(data, aes(X1,X2,color = X4)) + geom_point()
 G2 <- ggplot(data, aes(X1,X2,color = X3)) + geom_point()
 grid.arrange(G1,G2,nrow = 1)
 ```
+
 
 importo el archivo productos
 
@@ -99,6 +105,8 @@ preciovsmarketing <- prod[,2:3]
 ggplot(preciovsmarketing,aes(Precio,Marketing)) + geom_point()
 ```
 
+
+
 observo que la variable marketing se mueve entre valores gigantes, mientras que precio va de 0 a 170, kmedias le dará mucha prioridad a marketing por la naturaleza de la distancia euclidea, voy a estandarizar los datos
 
 
@@ -106,18 +114,25 @@ observo que la variable marketing se mueve entre valores gigantes, mientras que 
 datosEscalados <- data.frame(scale(preciovsmarketing))
 
 
-preciovsmarketing <- cbind(preciovsmarketing,factor(kmeans(preciovsmarketing,2)[[1]]))
-colnames(preciovsmarketing)[3] <- "grupo"
-
-datosEscalados <- cbind(datosEscalados,factor(kmeans(datosEscalados,2)[[1]]))
-colnames(datosEscalados)[3] <- "grupo"
+preciovsmarketing1 <- cbind(preciovsmarketing,factor(kmeans(preciovsmarketing,2)[[1]]))
+colnames(preciovsmarketing1)[3] <- "grupo"
 
 
-G1 <- ggplot(preciovsmarketing, aes(Precio,Marketing,color = grupo)) + geom_point() 
-G2 <- ggplot(datosEscalados, aes(Precio,Marketing,color = grupo)) + geom_point() 
+
+
+preciovsmarketing2 <- cbind(preciovsmarketing,factor(kmeans(datosEscalados,2)[[1]]))
+colnames(preciovsmarketing2)[3] <- "grupo"
+
+
+G1 <- ggplot(preciovsmarketing1, aes(Precio,Marketing,color = grupo)) + geom_point() 
+G2 <- ggplot(preciovsmarketing2, aes(Precio,Marketing,color = grupo)) + geom_point() 
 grid.arrange(G1,G2,nrow = 1)
 ```
+
+
 vemos que en el primer clustering solo se mira la variable marketing, mientras que en el segundo esta mas equilibrado, ahora comparo mis clusters buenos con los clusters determinados por el exito/fracaso
+
+
 ```{r}
 prod <- cbind(prod,factor(kmeans(datosEscalados,2)[[1]]))
 
@@ -127,6 +142,8 @@ G1 <- ggplot(prod, aes(Precio,Marketing,color = Resultado)) + geom_point()
 G2 <- ggplot(prod, aes(Precio,Marketing,color = grupo)) + geom_point() 
 grid.arrange(G1,G2,nrow = 1)
 ```
+
+
 vemos que el modelo hecho por kmeans luego de estandarizar los datos los agrupo de forma correcta en su mayoria
 
 ```{r}
@@ -151,14 +168,54 @@ arrestos5c <- cbind(arrestos,grupo)
 plot(errores,type = "l")
 ```
 
-veo que a partir de 4 clusters el error disminuye muy despacio, elijo k = 5
+
+
+del grafico se podría concluir que 5 es la cantidad óptima de clusters, ya que hay una disminucion del error importante pasando de 4 a 5, para ser mas exhaustivo voy a mirar boxplots de cada variable contra el grupo
+
+```{r}
+
+g31 <- ggplot(arrestos3c, aes(grupo, Murder, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g32 <- ggplot(arrestos3c, aes(grupo, Assault, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g33 <- ggplot(arrestos3c, aes(grupo, UrbanPop, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g34 <- ggplot(arrestos3c, aes(grupo, Rape, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+g41 <- ggplot(arrestos4c, aes(grupo, Murder, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g42 <- ggplot(arrestos4c, aes(grupo, Assault, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g43 <- ggplot(arrestos4c, aes(grupo, UrbanPop, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g44 <- ggplot(arrestos4c, aes(grupo, Rape, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+g51 <- ggplot(arrestos5c, aes(grupo, Murder, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g52 <- ggplot(arrestos5c, aes(grupo, Assault, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g53 <- ggplot(arrestos5c, aes(grupo, UrbanPop, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+g54 <- ggplot(arrestos5c, aes(grupo, Rape, fill = grupo)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+grid.arrange(g31,g41,g51,ncol = 3)
+
+grid.arrange(g32,g42,g52,ncol = 3)
+
+grid.arrange(g33,g43,g53,ncol = 3)
+
+grid.arrange(g34,g44,g54,ncol = 3)
+```
+
+
+
+La variable murder parece estar bien particionada tomando k = 4
+
+para las variables UrbanPop y assault observo que 3 clusters serían suficientes, ya que cuando tomamos más clusters nos quedan grupos muy similares
+
+en la variable Rape se ve que la distincion de 5 grupos parte en 2 un grupo que es muy disperso cuando tomamos 4 clusters
+
+en conclusión, a menos que le demos demasiada importancia a la variable Rape, tomar k = 4 es razonable, veo el summary de los grupos con k = 4
+
 
 
 ```{r}
-for (i in 1:5){
+for (i in 1:4){
   print(paste("resumen del cluster ",i))
   
-  print(summary(arrestos5c[arrestos5c[,"grupo"] == i,]))
+  print(summary(arrestos4c[arrestos4c[,"grupo"] == i,]))
 }
 ```
+
 
