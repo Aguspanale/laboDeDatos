@@ -1,0 +1,57 @@
+---
+title: "Untitled"
+author: "Agustin"
+date: "2023-02-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+
+```
+
+```{r}
+datos2 <- read.csv("bases/athlete_events.csv")
+datos3 <- read.csv("codigosPais.csv")
+datos4 <- read.csv("bases/temp.csv",check.names = F)
+datos3 <- datos3[1:2]
+
+datos4[189:192,2] <- c(0.7,3.7,5.10,5.35)
+
+```
+
+voy a intentar asignarle a cada federacion su temperatura
+
+```{r, echo=FALSE}
+temperaturasOrdenadas <- c()
+
+for (pais in datos3$National.Olympic.Committee){
+  if (pais %in% datos4[,1]){
+    temperaturasOrdenadas[length(temperaturasOrdenadas)+1] <- datos4[datos4[,1] == pais,2]
+  } else {
+    temperaturasOrdenadas[length(temperaturasOrdenadas)+1] <- NA
+  }
+}
+
+codigoConTemperatura <- cbind(datos3,temperaturasOrdenadas)
+```
+
+
+```{r}
+columnaAIndexar <- c()
+
+for (codigo in datos2$NOC){
+  if (codigo %in% codigoConTemperatura[,1]){
+    columnaAIndexar[length(columnaAIndexar)+1] <- codigoConTemperatura[codigoConTemperatura[,1] == codigo,3]
+  } else {
+    columnaAIndexar[length(columnaAIndexar)+1] <- NA
+  }
+}
+
+atletasConTemperatura <- cbind(datos2,as.numeric(columnaAIndexar))
+```
+
