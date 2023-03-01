@@ -1,0 +1,16 @@
+---
+title: "Practica 5"
+author: "agus"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# leo el archivo ar_properties 
+library(dplyr) # manejo de datos
+library(GGally) # scatterplots multiples
+```
