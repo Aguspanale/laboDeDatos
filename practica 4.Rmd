@@ -163,11 +163,79 @@ errorCompleto <- c()
 
 m2 <- lm(Precio~Sup+Fondo,datos1d)
 coeficientes <- as.numeric(coef(m2))
+
 for (i in 1:68){
   errorCompleto[i] <- abs(Precio[i] -(coeficientes[1]+ coeficientes[2]*Sup[i]+ coeficientes[3]*Fondo[i]))
 }
 
 which.max(abs(mean(errorCompleto)-error))
+
+```
+
+```{r}
+datos1b <- datos1a %>% 
+  # Me quedo con los que pertenecen a Argentina, Capital Federal y Boedo
+  filter(l1 == "Argentina", 
+         l2 == "Capital Federal",
+         l3=="Boedo",
+         # cuyo precio este en dolares 
+         currency == "USD", 
+         # propiedad tipo Casa
+         property_type %in% c("Casa"),
+         # operaciones de venta
+         operation_type == "Venta") %>% 
+  dplyr::select(id, l3, surface_total, surface_covered,lat,lon, price) %>% mutate(Precio=price,Sup=surface_covered,Fondo=surface_total-surface_covered,Lat = lat,Lon = lon) %>% 
+  dplyr::select(Sup,Fondo,Precio,Lat,Lon) %>%  filter(Fondo>=0) %>% na.omit()
+```
+
+
+
+```{r}
+
+
+error <- function(datos,formula){
+  error <- c()
+  for (i in 1:dim(datos)[1]){
+    m2 <- lm(as.formula(formula),datos[-i,])
+    predecido <- predict(m2,datos)[i]
+    error[i] <- abs(predecido - datos$Precio[i])
+  }
+  return(mean(error))
+}
+
+
+
+errores <- c()
+pal <- c("Sup","Fondo","Lat","Lon")
+formulas <- c()
+
+
+for (i in 1:15){
+  vectorBinario <- as.integer(intToBits(i)[c(1,2,3,4)])
+  vectorBinario <- vectorBinario == 1
+  vectorBinario
+  form <- "Precio~"
+  for (j in 1:4){
+    if(vectorBinario[j]){
+      form <- paste0(form,pal[j])
+      vectorBinario[j] <- FALSE
+      if (TRUE %in% vectorBinario[j:length(vectorBinario)]){
+        form <- paste0(form,"+")
+      }
+    }
+  }
+  print(form)
+  errores[i] <- error(datos1b,form)
+  formulas[i] <- form
+}
+errores[16] <- error(datos1b,"Precio~1")
+formulas[16] <- "Precio~1"
+
+
+
+formulas[which.min(errores)]
+
+
 
 ```
 
