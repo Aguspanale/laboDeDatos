@@ -13,4 +13,163 @@ knitr::opts_chunk$set(echo = TRUE)
 # leo el archivo ar_properties 
 library(dplyr) # manejo de datos
 library(GGally) # scatterplots multiples
+datos <- read.table("calibracion.txt",header = TRUE)
 ```
+
+
+
+
+```{r}
+Eval <- function(mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6) {
+  salida <- mean((datos$Y-mu-alfa1*datos$L1-alfa2*datos$L2-alfa3*datos$L3-alfa4*datos$L4-alfa5*datos$L5-alfa6*datos$L6)^2)
+  return(t(salida))
+}
+
+
+
+
+
+
+facred<-0.9999 # factor de reduccion de la ventana
+facred.acu<-1 # factor de reduccion acumulado
+toler<-0.01 # umbral de tolerancia
+# rangos
+rango.mu<- 5 # rango inicial de mu
+rango.alfa1<- 2 # rango inicial de alfa
+rango.alfa2<- 2
+rango.alfa3<- 2
+rango.alfa4<- 2
+rango.alfa5<- 2
+rango.alfa6<- 2
+# parametros iniciales
+mu<- 20 # valor inicial de mu
+alfa1<- 0 # valorinicial de alfa
+alfa2<- 0
+alfa3<- 0
+alfa4<- 0
+alfa5<- 0
+alfa6<- 0 
+# parametros mejores
+mejor.mu<-mu
+mejor.alfa1<-alfa1
+mejor.alfa2<-alfa2
+mejor.alfa3<-alfa3
+mejor.alfa4<-alfa4
+mejor.alfa5<-alfa5
+mejor.alfa6<-alfa6
+mejor.eval<-Eval(mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6) # el mejor valor
+mejores<-matrix(c(mejor.eval,mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6,1),1,9)
+k<-0 # indice de iteracion
+actu<-0 # indice de actualizacion
+set.seed(1) # Fijamos semilla para que siempre retorne el mismo resultado
+
+while (facred.acu>toler)
+{
+  k<-k+1
+  # Genero nuevos valores aleatorios
+  mu<-runif(1,mejor.mu-rango.mu*facred.acu,mejor.mu+rango.mu*facred.acu)
+  alfa1<-runif(1,mejor.alfa1-rango.alfa1*facred.acu,mejor.alfa1+rango.alfa1*facred.acu)
+  alfa2<-runif(1,mejor.alfa2-rango.alfa2*facred.acu,mejor.alfa2+rango.alfa2*facred.acu)
+  alfa3<-runif(1,mejor.alfa3-rango.alfa3*facred.acu,mejor.alfa3+rango.alfa3*facred.acu)
+  alfa4<-runif(1,mejor.alfa4-rango.alfa4*facred.acu,mejor.alfa4+rango.alfa4*facred.acu)
+  alfa5<-runif(1,mejor.alfa5-rango.alfa5*facred.acu,mejor.alfa5+rango.alfa5*facred.acu)
+  alfa6<-runif(1,mejor.alfa6-rango.alfa6*facred.acu,mejor.alfa6+rango.alfa6*facred.acu)
+  
+
+  # Evaluacion de los nuevos valores
+  valor<-Eval(mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6)
+  if (valor<mejor.eval) # SI encuentro algo mejor -> Actualizacion
+  {
+    actu<-actu+1
+    # grafico
+    
+    mejor.eval<-valor
+    mejor.mu<-mu
+    mejor.alfa1<-alfa1
+    mejor.alfa2<-alfa2
+    mejor.alfa3<-alfa3
+    mejor.alfa4<-alfa4
+    mejor.alfa5<-alfa5
+    mejor.alfa6<-alfa6
+
+    mejores<-rbind(mejores,c(mejor.eval,mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6,k))
+  }
+  else # SI NO encuentro algo mejor -> Reduzco rango de busqueda
+  {
+    facred.acu<-facred.acu*facred
+    print(facred.acu)
+  }
+}
+c(mu, alfa1, alfa2, alfa3, alfa4, alfa5, alfa6)
+dim(mejores)
+```
+
+
+
+```{r}
+
+
+error <- function(datos,formula){
+  error <- c()
+  for (i in 1:dim(datos)[1]){
+    m2 <- lm(as.formula(formula),datos[-i,])
+    predecido <- predict(m2,datos)[i]
+    error[i] <- abs(predecido - datos$Y[i])
+  }
+  return(mean(error))
+}
+
+error(datos,"Y~L1+L2+L3+L4+L5+L6")
+error(datos,"Y~L1+L2+L3+L4+L5+L6")/mean(datos$Y)
+```
+
+
+
+```{r}
+ML1 <- lm(Y~L1,datos)
+ML2 <- lm(Y~L2,datos)
+ML3 <- lm(Y~L3,datos)
+ML4 <- lm(Y~L4,datos)
+ML5 <- lm(Y~L5,datos)
+ML6 <- lm(Y~L6,datos)
+```
+
+
+
+
+ej 6
+
+
+```{r}
+errores <- c()
+pal <- c("L1","L2","L3","L4","L5","L6")
+formulas <- c()
+
+
+for (i in 1:63){
+  vectorBinario <- as.integer(intToBits(i)[c(1,2,3,4,5,6)])
+  vectorBinario <- vectorBinario == 1
+  vectorBinario
+  form <- "Y~"
+  for (j in 1:6){
+    if(vectorBinario[j]){
+      form <- paste0(form,pal[j])
+      vectorBinario[j] <- FALSE
+      if (TRUE %in% vectorBinario[j:length(vectorBinario)]){
+        form <- paste0(form,"+")
+      }
+    }
+  }
+  print(form)
+  errores[i] <- error(datos,form)
+  formulas[i] <- form
+}
+errores[16] <- error(datos,"Y~1")
+formulas[16] <- "Y~1"
+
+
+
+formulas[which.min(errores)]
+
+```
+
