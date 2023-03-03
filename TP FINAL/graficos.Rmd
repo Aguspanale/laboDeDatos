@@ -16,6 +16,12 @@ library(gridExtra)
 
 ```{r}
 datos$stroke <- factor(datos$stroke)
+
+datos$smoking_status <- factor(datos$smoking_status, levels = c("smokes","formerly smoked", "never smoked", "unknown"))
+
+
+
+
 ggplot(datos,aes(age,color = stroke,fill = stroke)) + 
   geom_histogram() +
   scale_fill_manual(values = c("#C3D7A4", "#FC4E07")) +
@@ -69,17 +75,94 @@ datos$bmi <- as.numeric(datos$bmi)
 
 
 datosConDiabetes <- cbind(datos,diabetes)
-ggplot(datos, aes(avg_glucose_level,color = diabetes)) + geom_density()
+ggplot(datos, aes(avg_glucose_level,fill = diabetes)) + 
+  geom_density(alpha = 0.3) 
+  
 
 
-ggplot(datos,aes(age,bmi)) + geom_point(color = "yellow") + geom_smooth()
+ggplot(datos,aes(age,bmi)) + geom_point() + geom_smooth()
 
 
-ggplot(datosConDiabetes,aes(diabetes,age,fill = diabetes)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+ggplot(datosConDiabetes,aes(diabetes,age,fill = diabetes)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white") +scale_fill_manual(values = c("darkviolet","darkolivegreen1" ))
+
+ggplot(datosConDiabetes,aes(stroke,avg_glucose_level,fill = stroke)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+datosHombres <- datos[datos[,"gender"] == "Male",]
+
+datosMujeres <- datos[datos[,"gender"] == "Female",]
+
+g1 <- ggplot(datosHombres,aes(stroke,avg_glucose_level,fill = stroke)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+g2 <- ggplot(datosMujeres,aes(stroke,avg_glucose_level,fill = stroke)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+grid.arrange(g1,g2)
 
 
+
+datosFumadores <- datos[datos[,"smoking_status"] == "Smokes" | datos[,"smoking_status"] == "formerly smoked" ,]
+
+datosNoFumadores <- datos[datos[,"smoking_status"] == "never smoked",]
+
+g1 <- ggplot(datosFumadores,aes(stroke,avg_glucose_level,fill = stroke)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+g2 <- ggplot(datosNoFumadores,aes(stroke,avg_glucose_level,fill = stroke)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+grid.arrange(g1,g2)
+
+```
+observo que hay un grupo significativo de personas que tuvieron un ACV y tenian la glucosa alta, pero tambien hay un grupo en la gente que tuvo ACV que no tiene la glucosa alta, y en los ultimos 2 graficos veo que esto no es explicado por las variables genero ni estatus de fumador.
+
+miro las proporciones de las variables partiendo el dataset en gente que tuvo acv y gente que no
+
+
+```{r}
+datosDiabeticos <- datosConDiabetes[datosConDiabetes[,"diabetes"] == "diabeticos",] 
+
+datosNoDiabeticos <- datosConDiabetes[datosConDiabetes[,"diabetes"] == "no diabeticos",] 
+
+g1 <- ggplot(datosDiabeticos,aes(diabetes,fill = stroke)) + geom_bar()
+
+g2 <- ggplot(datosNoDiabeticos,aes(diabetes,fill = stroke)) + geom_bar()
+
+grid.arrange(g1,g2,ncol=2)
 ```
 
 
 
+
+```{r}
+datosACV <- datos[datos[,"stroke"] == 1,]
+datosSINACV <- datos[datos[,"stroke"] != 1,]
+datosSINACV$gender[datosSINACV$gender == "Other"] <- "Female"
+datosSINACV$gender <- droplevels(factor(datosSINACV$gender))
+
+g1 <- ggplot(datosACV,aes(stroke,fill = gender)) + geom_bar()
+
+g2 <- ggplot(datosSINACV,aes(stroke,fill = gender)) + geom_bar()
+
+grid.arrange(g1,g2,ncol=2)
+
+
+g1 <- ggplot(datosACV,aes(stroke,fill = Residence_type)) + geom_bar()
+
+g2 <- ggplot(datosSINACV,aes(stroke,fill = Residence_type)) + geom_bar()
+
+grid.arrange(g1,g2,ncol=2)
+
+
+g1 <- ggplot(datosACV,aes(stroke,fill = smoking_status)) + geom_bar()
+
+g2 <- ggplot(datosSINACV,aes(stroke,fill = smoking_status)) + geom_bar()
+
+grid.arrange(g1,g2,ncol=2)
+
+ ggplot(datos,aes(stroke,fill = smoking_status)) + geom_bar()
+```
+
+
+
+
+```{r}
+ggplot(datos,aes(bmi)) + geom_histogram()
+```
 
