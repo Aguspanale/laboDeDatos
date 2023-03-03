@@ -1,0 +1,85 @@
+---
+title: "graficos tp"
+author: "agus"
+date: "2023-03-03"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+datos <- read.csv("ACVPrediction.csv", stringsAsFactors = FALSE)
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+
+```
+
+```{r}
+datos$stroke <- factor(datos$stroke)
+ggplot(datos,aes(age,color = stroke,fill = stroke)) + 
+  geom_histogram() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07")) +
+  scale_color_manual(values = c("#C3D7A4", "#FC4E07"))
+
+
+ggplot(datos,aes(stroke,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+
+
+ggplot(datos,aes(age,color = ever_married,fill = ever_married)) + 
+  geom_histogram() 
+
+
+```
+
+
+
+```{r}
+ggplot(datos,aes(Residence_type,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+ggplot(datos,aes(work_type,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+ggplot(datos,aes(ever_married,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+datos$hypertension <- factor(datos$hypertension)
+ggplot(datos,aes(hypertension,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+datos$heart_disease <- factor(datos$heart_disease)
+ggplot(datos,aes(heart_disease,fill = stroke)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("#C3D7A4", "#FC4E07"))
+
+```
+
+```{r}
+ggplot(datos, aes(avg_glucose_level)) + geom_density()
+diabetes <- factor(kmeans(datos$avg_glucose_level,centers = 2)[[1]],levels=c("1","2"),labels=c("diabeticos","no diabeticos"))
+
+datos$bmi <- as.numeric(datos$bmi)
+
+
+datosConDiabetes <- cbind(datos,diabetes)
+ggplot(datos, aes(avg_glucose_level,color = diabetes)) + geom_density()
+
+
+ggplot(datos,aes(age,bmi)) + geom_point(color = "yellow") + geom_smooth()
+
+
+ggplot(datosConDiabetes,aes(diabetes,age,fill = diabetes)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.05,fill = "white")
+
+
+```
+
+
+
+
